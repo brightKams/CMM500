@@ -1,0 +1,29 @@
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+import numpy as np
+
+
+# Using average values as placeholders for model performance and correlations
+data = {
+    'Author': ['Senanayake et al. (2024)', 'Ujah-Ogbuagu et al. (2024)', 'Ariyadasa et al. (2023)'],
+    'Textual Features': [0.94, 0.98, 0.98],
+    'Network/Server-Based Features': [0.92, 0.95, 0.90],
+    'Web Content Features': [0.91, 0.96, 0.97],
+    'Feature Selection': ['Correlation Analysis', 'Permutation Importance', 'Principal Component Analysis'],
+    'Accuracy': [94, 98.9, 98.34],
+    'F1-Score': [92, 95, 90],
+    'Throughput Improvement': [87, 90, 85]
+}
+
+df = pd.DataFrame(data)
+
+# Heatmap data
+heatmap_data = df[['Textual Features', 'Network/Server-Based Features', 'Web Content Features']].T
+heatmap_data.columns = df['Author']
+
+# Plot 1: Heatmap (Correlation Matrix)
+plt.figure(figsize=(8, 6))
+sns.heatmap(heatmap_data, annot=True, cmap='coolwarm', cbar_kws={'label': 'Performance Correlation'})
+plt.title("Correlation Matrix for Feature Engineering Approaches")
+plt.show()
