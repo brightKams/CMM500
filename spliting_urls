@@ -1,0 +1,43 @@
+#SPLITING ABOUT over 800,000 cleaned urls into a multiple of 50,000 urls each.
+
+import csv
+
+def split_csv(input_file, output_file1, output_file2):
+    """
+    Splits a CSV file into two equal halves.
+
+    Args:
+        input_file (str): Path to the input CSV file.
+        output_file1 (str): Path to the first output CSV file.
+        output_file2 (str): Path to the second output CSV file.
+    """
+
+    with open(input_file, 'r') as infile, \
+         open(output_file1, 'w', newline='') as outfile1, \
+         open(output_file2, 'w', newline='') as outfile2:
+
+        reader = csv.reader(infile)
+        writer1 = csv.writer(outfile1)
+        writer2 = csv.writer(outfile2)
+
+        # Write the header to both output files
+        header = next(reader)
+        writer1.writerow(header)
+        writer2.writerow(header)
+
+        # Split the rows into two halves
+        rows = list(reader)
+        midpoint = len(rows) // 2
+
+        # Write the first half to the first output file
+        writer1.writerows(rows[:midpoint])
+
+        # Write the second half to the second output file
+        writer2.writerows(rows[midpoint:])
+
+# Example usage:
+input_file = 'cleaned_malicious_domains.csv'
+output_file1 = 'first_half.csv'
+output_file2 = 'second_half.csv'
+
+split_csv(input_file, output_file1, output_file2)
