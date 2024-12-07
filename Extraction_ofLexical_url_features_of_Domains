@@ -1,0 +1,62 @@
+!pip install python-whois pandas dnspython requests beautifulsoup4
+
+import pandas as pd
+import whois
+import socket
+import requests
+from bs4 import BeautifulSoup
+from collections import Counter
+from math import log2
+import re
+
+
+# Clean and standardize the datasets
+# For the malicious domains
+malicious_domains = pd.read_csv("maliciousDomains.csv")
+
+malicious_cleaned = malicious_domains['url'].dropna() 
+malicious_cleaned.to_csv("cleaned_malicious_domains.csv", index=False, header=["Domain"])
+print("Cleaned dataset is saved as 'cleaned_malicious_domains.csv'.")
+
+
+# Load the uploaded dataset after Cleaning it.
+malicious_dataset = 'cleaned_malicious_domains.csv'
+malicious_domains = pd.read_csv(malicious_dataset)
+
+# Display the first few rows to inspect the structure
+malicious_domains.head()
+
+# Function to calculate Shannon entropy of a string
+def calculate_entropy(string):
+    probabilities = [freq / len(string) for freq in Counter(string).values()]
+    return -sum(p * log2(p) for p in probabilities if p > 0)
+
+# Extract features from domain names
+def extract_domain_features(domain):
+    # Vowels and consonants
+    vowels = re.findall(r'[aeiou]', domain, re.IGNORECASE)
+    consonants = re.findall(r'[bcdfghjklmnpqrstvwxyz]', domain, re.IGNORECASE)
+    
+    # Numeric and other characters
+    numbers = re.findall(r'\d', domain)
+    others = re.findall(r'[^a-zA-Z0-9]', domain)
+    
+    return {
+        "Domain_Length": len(domain),
+        "Vowel_Count": len(vowels),
+        "Consonant_Count": len(consonants),
+        "Numeric_Count": len(numbers),
+        "Other_Character_Count": len(others),
+        "Entropy": calculate_entropy(domain)
+    }
+
+# Apply feature extraction on all domains
+malicious_domains_features = malicious_domains['Domain'].apply(extract_domain_features)
+features_df = pd.DataFrame(list(malicious_domains_features))
+
+# Add domains back to the features dataframe
+features_df.insert(0, "Domain", malicious_domains['Domain'])
+
+# Display a preview of the features
+features_df.head()
+features_df.to_csv("features_combination.csv", index=False, header=True)
