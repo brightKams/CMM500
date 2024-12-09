@@ -1,0 +1,84 @@
+!pip install python-whois pandas dnspython requests beautifulsoup4
+
+import pandas as pd
+import whois
+import socket
+import requests
+from bs4 import BeautifulSoup
+from collections import Counter
+import math
+from math import log2
+import re
+
+
+# import pandas as pd
+# from collections import Counter
+
+
+
+
+
+# Load the uploaded dataset after Cleaning it.
+malicious_dataset = 'merged_cleaned_data.csv'
+malicious_domains = pd.read_csv(malicious_dataset)
+
+# # Display the first few rows to inspect the structure
+malicious_domains.head()
+df = pd.DataFrame(malicious_domains)
+
+# Function to calculate vowel, consonant, numeric, and other character counts
+def calculate_counts(domain):
+    vowels = "aeiouAEIOU"
+    consonants = "bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ"
+    digits = "0123456789"
+    
+    # domain_length = len(domain)
+    vowel_count = sum(1 for char in domain if char in vowels)
+    consonant_count = sum(1 for char in domain if char in consonants)
+    numeric_count = sum(1 for char in domain if char in digits)
+    other_count = sum(1 for char in domain if not char.isalnum())
+    
+    return vowel_count, consonant_count, numeric_count, other_count
+
+# Function to calculate Shannon entropy
+def calculate_entropy(domain):
+    # Count frequency of each character
+    frequency = Counter(domain)
+    total_chars = len(domain)
+    
+    # Calculate entropy
+    entropy = -sum((count / total_chars) * math.log2(count / total_chars) for count in frequency.values())
+    return entropy
+
+
+
+# Function to scrape HTML element count
+# def count_html_elements(domain):
+#     try:
+#         url = f"http://{domain}"
+#         response = requests.get(url, timeout=5)
+#         soup = BeautifulSoup(response.text, 'html.parser')
+#         return len(soup.find_all())
+#     except Exception:
+#         return None
+
+
+
+# Apply functions to each domain
+df["Domain Length"] = df["Domain Name"].apply(len)
+df["Vowel Count"] = df["Domain Name"].apply(lambda x: calculate_counts(x)[0])
+df["Consonant Count"] = df["Domain Name"].apply(lambda x: calculate_counts(x)[1])
+df["Numeric Count"] = df["Domain Name"].apply(lambda x: calculate_counts(x)[2])
+df["Other Character Count"] = df["Domain Name"].apply(lambda x: calculate_counts(x)[3])
+df["Entropy"] = df["Domain Name"].apply(calculate_entropy)
+# df["HTML Element Count"] = df["Domain Name"].apply(count_html_elements)
+
+
+rearrange_order = df[['Domain Name', 'Domain Length', 'Vowel Count', 'Consonant Count', 'Numeric Count', 
+                 'Other Character Count', 'Entropy', 'Creation Date', 'Expiration Date', 
+                 'Name Servers']]
+
+rearrange_order.to_csv("features_combination_updated.csv", index=False, header=True)
+rearrange_order.head()
+
+
