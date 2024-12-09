@@ -124,6 +124,11 @@ df["Other Character Count"] = df["Domain Name"].apply(lambda x: calculate_counts
 df["Entropy"] = df["Domain Name"].apply(calculate_entropy)
 # df["HTML Element Count"] = df["Domain Name"].apply(count_html_elements)
 
+# Convert 'Domain Name' column to lowercase
+data['Domain Name'] = data['Domain Name'].str.lower()
+
+# Convert 'server names' column to lowercase
+data['Name Servers'] = data['Name Servers'].str.lower()
 
 rearrange_order = df[['Domain Name', 'Domain Length', 'Vowel Count', 'Consonant Count', 'Numeric Count', 
                  'Other Character Count', 'Entropy', 'Creation Date', 'Expiration Date', 
