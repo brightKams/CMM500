@@ -48,7 +48,8 @@ def merge_and_clean_csv(file_pattern):
 
 
 # Replace '*.csv' with the actual pattern of your CSV files
-file_pattern = "./whois_details/result_*.csv"
+#file_pattern = "./whois_details/result_*.csv"
+file_pattern = "result_*.csv"
 
 # Merge and clean the CSV files
 cleaned_data = merge_and_clean_csv(file_pattern)
