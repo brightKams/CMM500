@@ -1,0 +1,26 @@
+import pandas as pd
+
+def split_csv(input_file, chunk_size=10000):
+    """Splits a large CSV file into smaller chunks.
+
+    Args:
+        input_file (str): Path to the input CSV file.
+        chunk_size (int, optional): Number of rows per chunk. Defaults to 10000.
+
+    Returns:
+        None
+    """
+
+    df = pd.read_csv(input_file)
+    num_chunks = len(df) // chunk_size + 1
+
+    for i in range(num_chunks):
+        start_index = i * chunk_size
+        end_index = min((i + 1) * chunk_size, len(df))
+        chunk_df = df[start_index:end_index]
+        chunk_file = f"chunk_{i+1}.csv"
+        chunk_df.to_csv(chunk_file, index=False)
+
+if __name__ == "__main__":
+    input_file = "cleaned_benign_domains.csv"
+    split_csv(input_file)
