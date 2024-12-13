@@ -64,7 +64,7 @@ def process_data(file_path):
 from sklearn.model_selection import KFold
 
 # Function to train the model using K-Fold Cross-Validation
-def train_random_forest_with_kfold(X, y, n_splits=5):
+def train_random_forest_with_kfold(X, y, n_splits=2):
     numeric_features = X.select_dtypes(include=[np.number]).columns.tolist()
     categorical_features = X.select_dtypes(exclude=[np.number]).columns.tolist()
 
