@@ -17,7 +17,7 @@ from collections import Counter
 from math import log2
 
 # Title for the app
-st.title("Malicious Domain Detection Using Random Forest Model Evaluation and Prediction App")
+st.title("Malicious Domain Detection Using Random Forest & K-Fold Cross-Validation Model Evaluation and Prediction App")
 
 # File uploader for CSV dataset
 uploaded_file = st.file_uploader("Upload a CSV file for training", type="csv")
