@@ -1,0 +1,147 @@
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import GaussianNB, MultinomialNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from scipy.sparse import csr_matrix, hstack
+
+
+# Load the dataset
+file_path = "../files/features_merged_combination_updated.csv"
+try:
+    data = pd.read_csv(file_path)
+    print("Dataset loaded successfully.")
+except FileNotFoundError:
+    raise FileNotFoundError(f"The file {file_path} does not exist.")
+except pd.errors.EmptyDataError:
+    raise ValueError("The file is empty.")
+except Exception as e:
+    raise Exception(f"An error occurred while loading the file: {e}")
+
+
+# Check for missing values and handle them separately for numeric and categorical columns
+numeric_columns = data.select_dtypes(include=[np.number]).columns
+categorical_columns = data.select_dtypes(exclude=[np.number]).columns
+
+# Fill missing values for numeric columns with the mean
+data[numeric_columns] = data[numeric_columns].fillna(data[numeric_columns].mean())
+
+# Fill missing values for categorical columns with the mode (most frequent value)
+data[categorical_columns] = data[categorical_columns].fillna(data[categorical_columns].mode().iloc[0])
+
+
+# # Check for missing values
+# if data.isnull().sum().any():
+#     print("Dataset contains missing values. Handling missing values...")
+#     data = data.fillna(data.mean())  # Replace missing values with column mean
+
+# Check for duplicate rows
+if data.duplicated().any():
+    print("Dataset contains duplicate rows. Removing duplicates...")
+    data = data.drop_duplicates()
+
+# Separate features and labels
+try:
+    X = data.drop("label", axis=1)  # Assuming the target column is named "label"
+    y = data["label"]
+except KeyError:
+    raise KeyError("The dataset must contain a 'label' column for classification.")
+
+
+
+
+
+
+# Identify categorical features
+categorical_features = X.select_dtypes(include=["object"]).columns
+
+if len(categorical_features) > 0:  # Check if there are any categorical features
+    print(f"Encoding {len(categorical_features)} categorical features...")
+    encoder = OneHotEncoder(sparse_output=True, handle_unknown='ignore')  # Use sparse_output
+    sparse_encoded_data = encoder.fit_transform(X[categorical_features])  # Sparse matrix
+    print(f"Sparse encoding done. Shape: {sparse_encoded_data.shape}")
+    
+    # Drop original categorical columns and combine sparse matrix with numerical data
+    X = X.drop(categorical_features, axis=1)
+    X = hstack([csr_matrix(X), sparse_encoded_data])
+
+# Scale the data
+scaler = StandardScaler(with_mean=False)  # Use with_mean=False for sparse data
+X = scaler.fit_transform(X)
+
+# Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+
+
+
+
+
+
+# Define models to try
+models = {
+    "Random Forest": RandomForestClassifier(random_state=42, n_jobs=-1),
+    "Logistic Regression": LogisticRegression(solver='saga', max_iter=500, random_state=42, n_jobs=-1),
+    "Naive Bayes (Gaussian)": GaussianNB(),
+    "K-Nearest Neighbors": KNeighborsClassifier(n_jobs=-1),
+    "Support Vector Machine": SVC(kernel="linear", random_state=42, probability=True),
+}
+
+# Define Support Vector Machine with balanced class weights to handle class imbalance
+svm_model = SVC(kernel="linear", random_state=42, probability=True, class_weight='balanced')
+
+
+# Train and evaluate each model
+results = {}
+for model_name, model in models.items():
+    print(f"\nTraining model: {model_name}")
+    try:
+
+        if isinstance(model, GaussianNB):
+            print("Converting sparse data to dense for Gaussian Naive Bayes...")
+            X_train_dense = X_train.toarray()
+            X_test_dense = X_test.toarray()
+        elif isinstance(svm_model, SVC):
+            print("Converting sparse data to dense for Support Vector Machine...")
+            X_train_dense = X_train.toarray()
+            X_test_dense = X_test.toarray()
+            # Train the model
+            # svm_model.fit(X_train_dense, y_train)
+        else:
+            X_train_dense = X_train
+            X_test_dense = X_test
+
+        # Train the model
+        model.fit(X_train_dense, y_train)
+        
+        # Make predictions
+        y_pred = model.predict(X_test_dense)
+        
+        # Evaluate the model
+        accuracy = accuracy_score(y_test, y_pred)
+        print(f"Accuracy for {model_name}: {accuracy:.4f}")
+        print("Confusion Matrix:")
+        print(confusion_matrix(y_test, y_pred))
+        print("\nClassification Report:")
+        print(classification_report(y_test, y_pred))
+        
+        # Store results
+        results[model_name] = {
+            "accuracy": accuracy,
+            "confusion_matrix": confusion_matrix(y_test, y_pred),
+            "classification_report": classification_report(y_test, y_pred, output_dict=True)
+        }
+    except Exception as e:
+        print(f"An error occurred with {model_name}: {e}")
+
+# Display best-performing model
+best_model = max(results, key=lambda x: results[x]["accuracy"])
+print(f"\nBest Model: {best_model} with Accuracy: {results[best_model]['accuracy']:.4f}")
+
+
+
+
